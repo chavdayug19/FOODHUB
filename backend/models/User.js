@@ -7,13 +7,13 @@ const UserSchema = new mongoose.Schema({
   role: { type: String, enum: ['admin', 'vendor'], required: true },
   vendorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Vendor' }, // Required if role is vendor
   name: { type: String },
+  isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now }
 });
 
-UserSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
+UserSchema.pre('save', async function() {
+  if (!this.isModified('password')) return;
   this.password = await bcrypt.hash(this.password, 10);
-  next();
 });
 
 UserSchema.methods.comparePassword = async function(candidatePassword) {
