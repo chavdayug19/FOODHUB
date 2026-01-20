@@ -5,6 +5,9 @@ exports.createOrder = async (req, res) => {
   try {
     const { hubId, vendorOrders, customerName, tableInfo } = req.body;
 
+    if (!hubId) return res.status(400).json({ message: 'Hub ID is required' });
+    if (!vendorOrders || vendorOrders.length === 0) return res.status(400).json({ message: 'No vendor orders provided' });
+
     // 1. Verify and recalculate totals from DB
     // We expect vendorOrders to contain: [{ vendorId, items: [{ menuItemId, quantity }] }]
 
@@ -75,9 +78,9 @@ exports.getOrders = async (req, res) => {
     const filter = {};
     // If vendor, only show orders containing their items
     if (req.user.role === 'vendor' && req.user.vendorId) {
-       // This query is a bit complex because we need to filter the sub-array in the response or query level.
-       // For simplicity, we find orders where 'vendorOrders.vendorId' matches.
-       filter['vendorOrders.vendorId'] = req.user.vendorId;
+      // This query is a bit complex because we need to filter the sub-array in the response or query level.
+      // For simplicity, we find orders where 'vendorOrders.vendorId' matches.
+      filter['vendorOrders.vendorId'] = req.user.vendorId;
     }
 
     const orders = await Order.find(filter).sort({ createdAt: -1 });
@@ -124,9 +127,9 @@ exports.updateOrderStatus = async (req, res) => {
 
 exports.getOrderById = async (req, res) => {
   try {
-     const order = await Order.findById(req.params.id);
-     if (!order) return res.status(404).json({ message: 'Order not found' });
-     res.json(order);
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    res.json(order);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

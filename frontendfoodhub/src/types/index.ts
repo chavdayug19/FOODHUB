@@ -4,7 +4,7 @@ export interface User {
     name: string;
     email: string;
     phone?: string;
-    role: 'admin' | 'vendor' | 'customer';
+    role: 'admin' | 'vendor' | 'customer' | 'staff';
     vendorId?: string;
 }
 
@@ -42,7 +42,7 @@ export interface MenuItem {
     category: string;
     vendorId: string;
     image?: string;
-    isAvailable: boolean;
+    availability: boolean;
     preparationTime?: number;
     createdAt: string;
 }

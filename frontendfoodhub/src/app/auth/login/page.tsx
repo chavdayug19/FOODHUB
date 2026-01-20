@@ -35,7 +35,7 @@ export default function LoginPage() {
                 const userData = JSON.parse(storedUser);
                 if (userData.role === 'admin') {
                     router.push('/dashboard/admin');
-                } else if (userData.role === 'vendor') {
+                } else if (userData.role === 'vendor' || userData.role === 'staff') {
                     router.push('/dashboard/vendor');
                 } else {
                     router.push('/');

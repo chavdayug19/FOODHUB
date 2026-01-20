@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import {
     ShoppingCart,
     ArrowLeft,
@@ -15,11 +16,13 @@ import {
     User,
     MapPin,
     Loader2,
-    ChevronRight
+    ChevronRight,
+    X // Added for modal
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import EmptyState from '@/components/EmptyState';
 import toast from 'react-hot-toast';
+import AuthModal from '@/components/AuthModal';
 
 export default function CartPage() {
     const {
@@ -36,25 +39,56 @@ export default function CartPage() {
         getTotalAmount,
         getItemsByVendor,
     } = useCart();
+
+    // Auto-fill customer details from Auth
+    const { user } = useAuth();
+
+    // Initial load effect to set name if available
+    useEffect(() => {
+        if (user?.name && !customerName) {
+            setCustomerName(user.name);
+        }
+    }, [user, customerName, setCustomerName]);
+
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
     const vendorItemsMap = getItemsByVendor();
     const totalAmount = getTotalAmount();
 
-    const handlePlaceOrder = async () => {
+    const [showTableModal, setShowTableModal] = useState(false);
+    const [showAuthModal, setShowAuthModal] = useState(false);
+
+    const handlePlaceOrderClick = () => {
+        if (items.length === 0) {
+            toast.error('Your cart is empty');
+            return;
+        }
+
+        // 1. Check Auth First
+        if (!user) {
+            setShowAuthModal(true);
+            return;
+        }
+
+        // 2. Check Name (Should be filled if auth passed)
         if (!customerName.trim()) {
             toast.error('Please enter your name');
             return;
         }
 
+        // 3. Proceed to Table/Order Logic
+        if (tableInfo && tableInfo.length > 0) {
+            submitOrder();
+        } else {
+            // Manual workflow: Show popup
+            setShowTableModal(true);
+        }
+    };
+
+    const submitOrder = async () => {
         if (!hubId) {
             toast.error('Hub information is missing. Please scan QR code again.');
-            return;
-        }
-
-        if (items.length === 0) {
-            toast.error('Your cart is empty');
             return;
         }
 
@@ -90,6 +124,7 @@ export default function CartPage() {
             toast.error(error.response?.data?.message || 'Failed to place order');
         } finally {
             setLoading(false);
+            setShowTableModal(false);
         }
     };
 
@@ -245,32 +280,34 @@ export default function CartPage() {
                                     placeholder="Enter your name"
                                     className="input-field pl-12"
                                     required
+                                    readOnly={!!user?.name}
                                 />
+                                {user?.name && (
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded-full">
+                                        Logged In
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        {/* Table Info */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Table Number (Optional)
-                            </label>
-                            <div className="relative">
-                                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input
-                                    type="text"
-                                    value={tableInfo}
-                                    onChange={(e) => setTableInfo(e.target.value)}
-                                    placeholder="e.g., Table 5"
-                                    className="input-field pl-12"
-                                />
+                        {/* Table Indicator (Only if detected) */}
+                        {tableInfo && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Table Number
+                                </label>
+                                <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-xl border border-green-200 dark:border-green-800">
+                                    <MapPin className="w-5 h-5" />
+                                    <span className="font-medium">Detected Table: <strong>{tableInfo}</strong></span>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>
 
             {/* Fixed Bottom Order Summary */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 p-4 shadow-2xl">
+            <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 p-4 shadow-2xl z-40">
                 <div className="max-w-2xl mx-auto">
                     <div className="flex items-center justify-between mb-4">
                         <div>
@@ -280,7 +317,7 @@ export default function CartPage() {
                             </p>
                         </div>
                         <button
-                            onClick={handlePlaceOrder}
+                            onClick={handlePlaceOrderClick}
                             disabled={loading || !customerName.trim()}
                             className="btn-primary py-4 px-8 flex items-center gap-2"
                         >
@@ -288,7 +325,7 @@ export default function CartPage() {
                                 <Loader2 className="w-5 h-5 animate-spin" />
                             ) : (
                                 <>
-                                    Place Order
+                                    {tableInfo ? 'Place Order' : 'Next'}
                                     <ChevronRight className="w-5 h-5" />
                                 </>
                             )}
@@ -296,6 +333,59 @@ export default function CartPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Table Entry Modal */}
+            {showTableModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm p-6 shadow-xl animate-scaleUp">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Enter Table Number</h3>
+                            <button
+                                onClick={() => setShowTableModal(false)}
+                                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Where are you sitting?
+                            </label>
+                            <input
+                                type="text"
+                                value={tableInfo}
+                                onChange={(e) => setTableInfo(e.target.value)}
+                                placeholder="e.g., 5 or Patio-2"
+                                autoFocus
+                                className="input-field text-lg py-3 text-center"
+                            />
+                            <p className="text-xs text-gray-500 mt-2 text-center">
+                                Look for the number on your table
+                            </p>
+                        </div>
+
+                        <button
+                            onClick={submitOrder}
+                            disabled={loading || !tableInfo.trim()}
+                            className="btn-primary w-full py-3 flex justify-center items-center gap-2"
+                        >
+                            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirm Order'}
+                        </button>
+                    </div>
+                </div>
+            )}
+            {/* Auth Modal */}
+            <AuthModal
+                isOpen={showAuthModal}
+                onClose={() => setShowAuthModal(false)}
+                onSuccess={() => {
+                    setShowAuthModal(false);
+                    // Automatically proceed if user logged in successfully?
+                    // Optional: could auto-trigger handlePlaceOrderClick again or just let them click it.
+                    // Let's let them click, or we can see ref.
+                }}
+            />
         </div>
     );
 }

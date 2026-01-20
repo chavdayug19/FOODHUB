@@ -15,7 +15,7 @@ const createOrderSchema = z.object({
     }))
   })),
   customerName: z.string().min(1),
-  tableInfo: z.string().min(1)
+  tableInfo: z.string().optional()
 });
 
 const updateStatusSchema = z.object({

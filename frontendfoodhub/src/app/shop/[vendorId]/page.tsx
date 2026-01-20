@@ -14,7 +14,8 @@ import {
     Minus,
     Filter,
     Clock,
-    ChefHat
+    ChefHat,
+    Search
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { MenuItemSkeleton } from '@/components/Skeleton';
@@ -25,7 +26,7 @@ interface PageProps {
     params: { vendorId: string };
 }
 
-export default function VendorMenuPage({ params }: PageProps) {
+export default function ShopPage({ params }: PageProps) {
     const { vendorId } = params;
 
     const [vendor, setVendor] = useState<Vendor | null>(null);
@@ -33,14 +34,21 @@ export default function VendorMenuPage({ params }: PageProps) {
     const [categories, setCategories] = useState<string[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [loading, setLoading] = useState(true);
-    const { items, addItem, removeItem, updateQuantity, getTotalItems, hubId } = useCart();
+    const { items, addItem, removeItem, updateQuantity, getTotalItems, setTableInfo, setHubId } = useCart();
     const router = useRouter();
 
     useEffect(() => {
+        // Capture Table Info from URL if present
+        const searchParams = new URLSearchParams(window.location.search);
+        const table = searchParams.get('table');
+        if (table) {
+            setTableInfo(table);
+        }
+
         if (vendorId) {
             fetchData();
         }
-    }, [vendorId]);
+    }, [vendorId, setTableInfo]);
 
     const fetchData = async () => {
         try {
@@ -48,6 +56,10 @@ export default function VendorMenuPage({ params }: PageProps) {
             const vendorResponse = await api.get(`/vendors/${vendorId}`);
             const vendorData = vendorResponse.data.data || vendorResponse.data;
             setVendor(vendorData);
+
+            if (vendorData.hubId) {
+                setHubId(vendorData.hubId);
+            }
 
             // Fetch menu items
             const menuResponse = await api.get(`/menu-items?vendorId=${vendorId}`);
@@ -72,7 +84,14 @@ export default function VendorMenuPage({ params }: PageProps) {
     };
 
     const handleAddToCart = (menuItem: MenuItem) => {
-        addItem(menuItem, vendor?.name || 'Unknown Vendor');
+        if (!vendor) return;
+
+        // Add item to cart with proper vendor name
+        // The CartContext might handle vendor name if passed or fetching internally.
+        // Assuming addItem requires (item, vendorName) or similar based on previous context,
+        // or just item if cart handles logic. 
+        // Based on previous file read, addItem(menuItem, vendorName) was used.
+        addItem(menuItem, vendor.name);
     };
 
     const handleQuantityChange = (menuItemId: string, delta: number) => {
@@ -90,7 +109,7 @@ export default function VendorMenuPage({ params }: PageProps) {
         ? menuItems
         : menuItems.filter(item => item.category === selectedCategory);
 
-    const availableItems = filteredItems.filter(item => item.availability);
+    const availableItems = filteredItems.filter(item => item.availability); // Using 'availability' confirmed from previous step
 
     const totalCartItems = getTotalItems();
 
@@ -100,15 +119,13 @@ export default function VendorMenuPage({ params }: PageProps) {
 
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 {/* Back Button */}
-                {hubId && (
-                    <Link
-                        href={`/hub/${hubId}`}
-                        className="inline-flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-orange-500 transition-colors mb-6"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        <span>Back to Vendors</span>
-                    </Link>
-                )}
+                <Link
+                    href="/"
+                    className="inline-flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-orange-500 transition-colors mb-6"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Back to Home</span>
+                </Link>
 
                 {/* Vendor Header */}
                 {loading ? (
@@ -215,12 +232,10 @@ export default function VendorMenuPage({ params }: PageProps) {
                                                 {item.description}
                                             </p>
                                         )}
-                                        {item.preparationTime && (
-                                            <div className="flex items-center gap-1 mt-2 text-xs text-gray-400">
-                                                <Clock className="w-3 h-3" />
-                                                <span>{item.preparationTime} mins</span>
-                                            </div>
-                                        )}
+                                        {/* Display Category as tag */}
+                                        <span className="inline-block mt-2 px-2 py-0.5 text-xs font-medium bg-blue-50 text-blue-600 rounded-full dark:bg-blue-900/30 dark:text-blue-400">
+                                            {item.category}
+                                        </span>
 
                                         {/* Price & Add to Cart */}
                                         <div className="flex items-center justify-between mt-3">

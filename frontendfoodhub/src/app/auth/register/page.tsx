@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -15,26 +15,82 @@ import {
     Phone,
     ArrowRight,
     Building2,
-    UserCircle
+    UserCircle,
+    Store,
+    BadgeCheck
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function RegisterPage() {
+    // Basic Form Data
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         password: '',
         confirmPassword: '',
         phone: '',
-        role: 'customer' as 'admin' | 'vendor' | 'customer',
+        role: 'customer' as 'admin' | 'vendor' | 'customer' | 'staff',
     });
+
+    // Vendor/Staff Specific Data
+    const [vendorData, setVendorData] = useState({
+        hubId: '',
+        vendorName: '', // For Owner
+        vendorId: '',   // For Staff
+        vendorRole: 'owner' as 'owner' | 'staff'
+    });
+
+    const [hubs, setHubs] = useState<any[]>([]);
+    const [vendors, setVendors] = useState<any[]>([]);
+
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+
     const { register } = useAuth();
     const router = useRouter();
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    useEffect(() => {
+        // Fetch Hubs on Mount
+        const fetchHubs = async () => {
+            try {
+                const res = await fetch('http://localhost:5000/api/v1/hubs');
+                if (res.ok) {
+                    const data = await res.json();
+                    setHubs(data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch hubs", err);
+            }
+        };
+        fetchHubs();
+    }, []);
+
+    useEffect(() => {
+        // Fetch Vendors when Hub changes (for Staff)
+        if (vendorData.hubId && vendorData.vendorRole === 'staff') {
+            const fetchVendors = async () => {
+                try {
+                    const res = await fetch(`http://localhost:5000/api/v1/vendors?hubId=${vendorData.hubId}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        setVendors(data);
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch vendors", err);
+                }
+            };
+            fetchVendors();
+        } else {
+            setVendors([]);
+        }
+    }, [vendorData.hubId, vendorData.vendorRole]);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleVendorChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        setVendorData({ ...vendorData, [e.target.name]: e.target.value });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -53,19 +109,41 @@ export default function RegisterPage() {
         setLoading(true);
 
         try {
+            // Determine final role to send to backend
+            // If user selected 'vendor' (UI), check sub-role.
+            // If sub-role is 'owner', valid backend role is 'vendor'.
+            // If sub-role is 'staff', valid backend role is 'staff'.
+
+            let finalRole = formData.role;
+            if (formData.role === 'vendor') {
+                if (vendorData.vendorRole === 'owner') {
+                    finalRole = 'vendor';
+                } else {
+                    finalRole = 'staff';
+                }
+            }
+
             await register({
                 name: formData.name,
                 email: formData.email,
                 password: formData.password,
                 phone: formData.phone || undefined,
-                role: formData.role,
+                role: finalRole as any,
+                // Additional fields
+                hubId: vendorData.hubId,
+                vendorName: vendorData.vendorName,
+                vendorId: vendorData.vendorId
             });
+
             toast.success('Account created successfully!');
 
             // Redirect based on role
-            if (formData.role === 'admin') {
+            if (finalRole === 'admin') {
                 router.push('/dashboard/admin');
-            } else if (formData.role === 'vendor') {
+            } else if (finalRole === 'vendor') {
+                router.push('/dashboard/vendor');
+            } else if (finalRole === 'staff') {
+                // Staff might share vendor dashboard or have their own
                 router.push('/dashboard/vendor');
             } else {
                 router.push('/');
@@ -77,9 +155,10 @@ export default function RegisterPage() {
         }
     };
 
+    // UI Roles for the main switch
     const roles = [
-        { id: 'customer', label: 'Customer', icon: UserCircle },
-        { id: 'vendor', label: 'Vendor', icon: Building2 },
+        { id: 'customer', label: 'Normal User', icon: UserCircle },
+        { id: 'vendor', label: 'Vendor / Staff', icon: Building2 },
     ];
 
     return (
@@ -106,7 +185,7 @@ export default function RegisterPage() {
                         </p>
                     </div>
 
-                    {/* Role Selector */}
+                    {/* Main Role Selector */}
                     <div className="grid grid-cols-2 gap-3 mb-6">
                         {roles.map((role) => (
                             <button
@@ -136,6 +215,35 @@ export default function RegisterPage() {
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-4">
+
+                        {/* Vendor Sub-Tabs (Only if Vendor selected) */}
+                        {formData.role === 'vendor' && (
+                            <div className="mb-4 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg flex space-x-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setVendorData({ ...vendorData, vendorRole: 'owner' })}
+                                    className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${vendorData.vendorRole === 'owner'
+                                        ? 'bg-white dark:bg-gray-700 text-green-600 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                                        }`}
+                                >
+                                    <Store className="w-4 h-4 inline mr-1" />
+                                    Vendor Owner
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setVendorData({ ...vendorData, vendorRole: 'staff' })}
+                                    className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${vendorData.vendorRole === 'staff'
+                                        ? 'bg-white dark:bg-gray-700 text-green-600 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                                        }`}
+                                >
+                                    <BadgeCheck className="w-4 h-4 inline mr-1" />
+                                    Vendor Staff
+                                </button>
+                            </div>
+                        )}
+
                         {/* Name */}
                         <div>
                             <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -155,6 +263,79 @@ export default function RegisterPage() {
                                 />
                             </div>
                         </div>
+
+                        {/* Hub Selection (For Vendor Role) */}
+                        {formData.role === 'vendor' && (
+                            <div>
+                                <label htmlFor="hubId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                    Select Hub
+                                </label>
+                                <div className="relative">
+                                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <select
+                                        id="hubId"
+                                        name="hubId"
+                                        value={vendorData.hubId}
+                                        onChange={handleVendorChange}
+                                        className="input-field input-with-icon appearance-none"
+                                        required
+                                    >
+                                        <option value="">Select a Food Hub</option>
+                                        {hubs.map((hub) => (
+                                            <option key={hub._id} value={hub._id}>{hub.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Vendor Name (Owner Only) */}
+                        {formData.role === 'vendor' && vendorData.vendorRole === 'owner' && (
+                            <div>
+                                <label htmlFor="vendorName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                    Restaurant / Shop Name
+                                </label>
+                                <div className="relative">
+                                    <Store className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        id="vendorName"
+                                        name="vendorName"
+                                        value={vendorData.vendorName}
+                                        onChange={handleVendorChange}
+                                        placeholder="E.g. Burger King"
+                                        className="input-field input-with-icon"
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Vendor Selection (Staff Only) */}
+                        {formData.role === 'vendor' && vendorData.vendorRole === 'staff' && (
+                            <div>
+                                <label htmlFor="vendorId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                    Select Restaurant ({vendors.length > 0 ? vendors.length : 'No vendors'})
+                                </label>
+                                <div className="relative">
+                                    <Store className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <select
+                                        id="vendorId"
+                                        name="vendorId"
+                                        value={vendorData.vendorId}
+                                        onChange={handleVendorChange}
+                                        className="input-field input-with-icon appearance-none"
+                                        required
+                                        disabled={!vendorData.hubId}
+                                    >
+                                        <option value="">{vendorData.hubId ? 'Select Restaurant' : 'Select Hub First'}</option>
+                                        {vendors.map((v) => (
+                                            <option key={v._id} value={v._id}>{v.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Email */}
                         <div>

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { QrCode, Search, MapPin, ArrowRight, Loader2 } from 'lucide-react';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -12,28 +13,68 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  useEffect(() => {
+    // If table param exists in URL (e.g. /?table=5), likely scanned a Hub QR
+    const params = new URLSearchParams(window.location.search);
+    const tableParam = params.get('table');
+    const hubParam = params.get('hubId');
+
+    if (tableParam) {
+      // If we have a table param, we might want to automatically "scan" for the default hub 
+      // OR if hubId is provided in URL, go there.
+      // For now, let's assume the QR might just be the Hub Code OR the URL contains context.
+      // User request: "if user scan directly from table than open website and they see the venders list"
+
+      if (hubParam) {
+        router.push(`/hub/${hubParam}?table=${tableParam}`);
+      }
+    }
+  }, [router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!qrCode.trim()) {
-      toast.error('Please enter a QR code');
+      toast.error('Please enter a FoodHub Name or Code');
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await api.get(`/hubs/qr/${qrCode.trim()}`);
-      const hub = response.data.data || response.data;
+      // Allow searching by Name or Code. 
+      // API lookup needs to support name search or we filter client side if list is small, 
+      // but let's assume existing endpoint works for ID/Code.
+      // We will try to find a hub that matches.
+      const response = await api.get(`/hubs?search=${qrCode.trim()}`);
+      const headers = response.data;
+      // The API response structure for list might be { data: [...] }
+      const hubs = Array.isArray(headers) ? headers : (headers.data || []);
 
-      if (hub && hub._id) {
-        toast.success(`Found: ${hub.name}`);
-        router.push(`/hub/${hub._id}`);
+      const foundHub = hubs.find((h: any) =>
+        h.name.toLowerCase().includes(qrCode.trim().toLowerCase()) ||
+        h._id === qrCode.trim()
+      );
+
+      if (foundHub) {
+        toast.success(`Found: ${foundHub.name}`);
+        router.push(`/hub/${foundHub._id}`);
       } else {
-        toast.error('Hub not found');
+        // Fallback to QR lookup endpoint if it exists
+        try {
+          const qrRes = await api.get(`/hubs/qr/${qrCode.trim()}`);
+          const hub = qrRes.data.data || qrRes.data;
+          if (hub && hub._id) {
+            router.push(`/hub/${hub._id}`);
+          } else {
+            toast.error('FoodHub not found');
+          }
+        } catch {
+          toast.error('FoodHub not found');
+        }
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Invalid QR code');
+      toast.error('Error searching for FoodHub');
     } finally {
       setLoading(false);
     }
@@ -101,6 +142,16 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Explore Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="text-center mb-10">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">...or Explore Popular Hubs</h2>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">Don't have a QR code? Browse our top food courts</p>
+        </div>
+
+        <ExploreHubs />
+      </div>
+
       {/* Features Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <div className="grid md:grid-cols-3 gap-6">
@@ -144,6 +195,49 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ExploreHubs() {
+  const [hubs, setHubs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHubs = async () => {
+      try {
+        // Assuming we can fetch hubs publicly. If not, we might need a public endpoint.
+        const res = await api.get('/hubs');
+        const data = res.data.data || res.data;
+        setHubs(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Failed to fetch hubs", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHubs();
+  }, []);
+
+  if (loading) return <div className="flex justify-center"><Loader2 className="animate-spin text-orange-500" /></div>;
+
+  if (hubs.length === 0) return <p className="text-center text-gray-400">No hubs found.</p>;
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      {hubs.map((hub) => (
+        <Link href={`/hub/${hub._id}`} key={hub._id} className="card p-5 hover:shadow-lg transition-all group">
+          <div className="flex items-center gap-4 mb-3">
+            <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-xl flex items-center justify-center text-orange-500">
+              <MapPin className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-orange-500 transition-colors">{hub.name}</h3>
+              <p className="text-xs text-gray-500">{hub.location || 'Location'}</p>
+            </div>
+          </div>
+        </Link>
+      ))}
     </div>
   );
 }

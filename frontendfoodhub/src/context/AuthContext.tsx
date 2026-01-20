@@ -21,7 +21,10 @@ interface RegisterData {
     email: string;
     password: string;
     phone?: string;
-    role?: 'admin' | 'vendor' | 'customer';
+    role?: 'admin' | 'vendor' | 'customer' | 'staff'; // Added staff to allowed roles in main type
+    hubId?: string;
+    vendorName?: string;
+    vendorId?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

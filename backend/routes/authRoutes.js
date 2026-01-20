@@ -5,16 +5,21 @@ const validate = require('../middlewares/validate');
 const { z } = require('zod');
 
 const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-  role: z.enum(['admin', 'vendor']),
-  vendorId: z.string().optional(),
-  name: z.string().optional()
+  body: z.object({
+    email: z.string().email(),
+    password: z.string().min(6),
+    role: z.enum(['admin', 'vendor', 'customer']),
+    vendorId: z.string().optional(),
+    name: z.string().optional(),
+    phone: z.string().optional()
+  })
 });
 
 const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string()
+  body: z.object({
+    email: z.string().email(),
+    password: z.string()
+  })
 });
 
 router.post('/register', validate(registerSchema), register);

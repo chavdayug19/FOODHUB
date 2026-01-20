@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Stall - Admin Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="landing.css" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav-container">
+            <div class="logo">Food Stall</div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#about">About</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#contact">Contact</a>
+                <a href="index.html" class="login-btn">Login</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Manage Your Restaurant with Ease</h1>
+                <p>Streamline operations, boost sales, and delight customers with our comprehensive restaurant management system</p>
+                <a href="#pricing" class="cta-btn">Start Free Trial</a>
+            </div>
+        </section>
+
+        <section id="features" class="features">
+            <h2>Powerful Features for Your Business</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <i class="fas fa-utensils"></i>
+                    <h3>Menu Management</h3>
+                    <p>Easily update menus, prices, and availability in real-time</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>Sales Analytics</h3>
+                    <p>Track performance with detailed reports and insights</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-mobile-alt"></i>
+                    <h3>Mobile Ordering</h3>
+                    <p>Accept orders through our user-friendly mobile app</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-users"></i>
+                    <h3>Customer Management</h3>
+                    <p>Build loyalty with customer profiles and history</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="about">
+            <h2>About Food Stall</h2>
+            <div class="about-content">
+                <div class="about-text">
+                    <p>Food Stall is your all-in-one restaurant management solution, designed to help food businesses thrive in the digital age. We combine powerful tools with ease of use to create the perfect platform for your success.</p>
+                    <ul class="about-features">
+                        <li><i class="fas fa-check"></i> Easy to use interface</li>
+                        <li><i class="fas fa-check"></i> 24/7 customer support</li>
+                        <li><i class="fas fa-check"></i> Regular updates and new features</li>
+                        <li><i class="fas fa-check"></i> Secure payment processing</li>
+                    </ul>
+                </div>
+                <div class="restaurant-gallery">
+                    <div class="gallery-item" style="background-image: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3')"></div>
+                    <div class="gallery-item" style="background-image: url('https://images.unsplash.com/photo-1552566626-52f8b828add9?ixlib=rb-4.0.3')"></div>
+                    <div class="gallery-item" style="background-image: url('https://images.unsplash.com/photo-1559339352-11d035aa65de?ixlib=rb-4.0.3')"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="pricing" class="pricing">
+            <h2>Choose Your Plan</h2>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>Starter</h3>
+                    <div class="price">₹999<span>/month</span></div>
+                    <ul class="features-list">
+                        <li>Basic menu management</li>
+                        <li>Up to 100 orders/month</li>
+                        <li>Basic analytics</li>
+                        <li>Email support</li>
+                    </ul>
+                    <a href="#" class="subscribe-btn">Get Started</a>
+                </div>
+                <div class="pricing-card popular">
+                    <div class="popular-tag">Most Popular</div>
+                    <h3>Professional</h3>
+                    <div class="price">₹1,999<span>/month</span></div>
+                    <ul class="features-list">
+                        <li>Advanced menu management</li>
+                        <li>Unlimited orders</li>
+                        <li>Detailed analytics</li>
+                        <li>24/7 support</li>
+                        <li>Customer management</li>
+                    </ul>
+                    <a href="#" class="subscribe-btn">Get Started</a>
+                </div>
+                <div class="pricing-card">
+                    <h3>Enterprise</h3>
+                    <div class="price">₹4,999<span>/month</span></div>
+                    <ul class="features-list">
+                        <li>All Professional features</li>
+                        <li>Multiple locations</li>
+                        <li>API access</li>
+                        <li>Dedicated support</li>
+                        <li>Custom integrations</li>
+                    </ul>
+                    <a href="#" class="subscribe-btn">Contact Sales</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="contact">
+            <h2>Get in Touch</h2>
+            <div class="contact-container">
+                <form class="contact-form">
+                    <div class="form-group">
+                        <label for="name">Name</label>
+                        <input type="text" id="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Message</label>
+                        <textarea id="message" rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Send Message</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Food Stall</h4>
+                <p>Making restaurant management easier, one plate at a time.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <a href="#features">Features</a>
+                <a href="#about">About</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#contact">Contact</a>
+            </div>
+            <div class="footer-section">
+                <h4>Contact Us</h4>
+                <p>Email: support@foodstall.com</p>
+                <p>Phone: +91 123 456 7890</p>
+            </div>
+            <div class="footer-section">
+                <h4>Follow Us</h4>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Food Stall. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
