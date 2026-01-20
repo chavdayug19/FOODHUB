@@ -93,3 +93,21 @@ A scalable, production-ready QR-based multi-vendor food ordering web application
 3. **Admin**:
    - Login with `admin@example.com` / `password123`.
    - View Hubs and Vendors.
+   
+
+ 
+
+
+
+BACKEND .ENV 
+
+MONGO_URI=mongodb+srv://chavdayug5_db_user:YUG@foodhub.uzvohq6.mongodb.net/
+JWT_SECRET=your_secret_key
+PORT=5000
+
+
+FROENTEND .ENV
+
+
+NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
+NEXT_PUBLIC_SOCKET_URL=http://localhost:5000
