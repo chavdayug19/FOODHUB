@@ -6,6 +6,8 @@ import { useAuth } from '@/context/AuthContext';
 import { Plus, UserPlus, Mail, Phone, Briefcase, Clock, Trash2, Loader2, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import StaffPermissionModal from '@/components/StaffPermissionModal';
+import { Shield } from 'lucide-react';
 
 export default function StaffManagementPage() {
     const { user } = useAuth();
@@ -21,6 +23,13 @@ export default function StaffManagementPage() {
         phone: '',
         position: 'Staff',
         shift: 'Morning'
+    });
+
+    const [permissionModal, setPermissionModal] = useState({
+        isOpen: false,
+        userId: '',
+        userName: '',
+        permissions: {}
     });
 
     useEffect(() => {
@@ -112,8 +121,22 @@ export default function StaffManagementPage() {
                             </div>
                         </div>
 
-                        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-400">
-                            Joined {new Date(member.joinedAt).toLocaleDateString()}
+                        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                            <span className="text-xs text-gray-400">
+                                Joined {new Date(member.joinedAt).toLocaleDateString()}
+                            </span>
+                            <button
+                                onClick={() => setPermissionModal({
+                                    isOpen: true,
+                                    userId: member.user._id,
+                                    userName: member.user.name,
+                                    permissions: member.user.permissions || {}
+                                })}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors text-xs font-semibold"
+                            >
+                                <Shield className="w-3 h-3" />
+                                Permissions
+                            </button>
                         </div>
                     </div>
                 ))}
@@ -237,6 +260,16 @@ export default function StaffManagementPage() {
                     </div>
                 </div>
             )}
+
+            {/* Permission Modal */}
+            <StaffPermissionModal
+                isOpen={permissionModal.isOpen}
+                onClose={() => setPermissionModal({ ...permissionModal, isOpen: false })}
+                userId={permissionModal.userId}
+                userName={permissionModal.userName}
+                initialPermissions={permissionModal.permissions}
+                onUpdate={fetchStaff}
+            />
         </div>
     );
 }
