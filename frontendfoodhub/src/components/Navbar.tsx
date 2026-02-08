@@ -17,9 +17,11 @@ import {
     LayoutDashboard
 } from 'lucide-react';
 import { useState } from 'react';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
 
 export default function Navbar() {
     const { user, logout, isAuthenticated } = useAuth();
+    const { canViewDashboard, isAdmin } = useRoleAccess();
     const { getTotalItems } = useCart();
     const { theme, toggleTheme } = useTheme();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -82,10 +84,10 @@ export default function Navbar() {
                         {/* User Menu */}
                         {isAuthenticated ? (
                             <div className="flex items-center gap-3">
-                                {/* Dashboard button - Only for admin, vendor, and staff */}
-                                {(user?.role === 'admin' || user?.role === 'vendor' || user?.role === 'staff') && (
+                                {/* Dashboard button - Dynamic permission check */}
+                                {canViewDashboard && (
                                     <Link
-                                        href={user?.role === 'admin' ? '/dashboard/admin' : '/dashboard/vendor'}
+                                        href={isAdmin ? '/dashboard/admin' : '/dashboard/vendor'}
                                         className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                                     >
                                         <LayoutDashboard className="w-4 h-4" />

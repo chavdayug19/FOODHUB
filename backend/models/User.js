@@ -9,6 +9,15 @@ const UserSchema = new mongoose.Schema({
   name: { type: String },
   phone: { type: String },
   isActive: { type: Boolean, default: true },
+  permissions: {
+    view_dashboard: { type: Boolean },
+    manage_menu: { type: Boolean },
+    manage_staff: { type: Boolean },
+    view_orders: { type: Boolean },
+    update_order_status: { type: Boolean },
+    view_analytics: { type: Boolean },
+    manage_qr_codes: { type: Boolean }
+  },
   createdAt: { type: Date, default: Date.now }
 });
 

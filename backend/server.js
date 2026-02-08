@@ -47,6 +47,7 @@ app.use('/api/v1/vendors', vendorRoutes);
 app.use('/api/v1/menu-items', menuRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/staff', require('./routes/staffRoutes'));
+app.use('/api/v1/permissions', require('./routes/permissionRoutes'));
 
 // Socket.io
 socketHandler(io);

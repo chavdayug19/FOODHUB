@@ -1,4 +1,13 @@
-// User types
+export interface UserPermissions {
+    view_dashboard?: boolean;
+    manage_menu?: boolean;
+    manage_staff?: boolean;
+    view_orders?: boolean;
+    update_order_status?: boolean;
+    view_analytics?: boolean;
+    manage_qr_codes?: boolean;
+}
+
 export interface User {
     _id: string;
     name: string;
@@ -6,6 +15,7 @@ export interface User {
     phone?: string;
     role: 'admin' | 'vendor' | 'customer' | 'staff';
     vendorId?: string;
+    permissions?: UserPermissions;
 }
 
 // Hub types
