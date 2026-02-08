@@ -8,10 +8,12 @@ const registerSchema = z.object({
   body: z.object({
     email: z.string().email(),
     password: z.string().min(6),
-    role: z.enum(['admin', 'vendor', 'customer']),
+    role: z.enum(['admin', 'vendor', 'customer', 'staff']),
     vendorId: z.string().optional(),
     name: z.string().optional(),
-    phone: z.string().optional()
+    phone: z.string().optional(),
+    hubId: z.string().optional(),
+    vendorName: z.string().optional()
   })
 });
 

@@ -25,12 +25,18 @@ interface PageProps {
     params: { orderId: string };
 }
 
-const statusConfig: Record<OrderStatus, { label: string; icon: any; color: string; bgColor: string }> = {
+const statusConfig: Record<string, { label: string; icon: any; color: string; bgColor: string }> = {
     pending: {
         label: 'Order Placed',
         icon: Clock,
         color: 'text-yellow-500',
         bgColor: 'bg-yellow-100 dark:bg-yellow-900/30'
+    },
+    'in-progress': {
+        label: 'In Progress',
+        icon: ChefHat,
+        color: 'text-blue-500',
+        bgColor: 'bg-blue-100 dark:bg-blue-900/30'
     },
     preparing: {
         label: 'Preparing',
@@ -116,7 +122,7 @@ export default function OrderTrackingPage({ params }: PageProps) {
     };
 
     const overallStatus = getOverallStatus();
-    const config = statusConfig[overallStatus];
+    const config = statusConfig[overallStatus] || statusConfig['pending']; // Fallback to pending if status not found
     const StatusIcon = config.icon;
 
     return (
@@ -196,52 +202,6 @@ export default function OrderTrackingPage({ params }: PageProps) {
                             </div>
                         </div>
 
-                        {/* Status Timeline */}
-                        <div className="card p-6">
-                            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
-                                Order Progress
-                            </h3>
-                            <div className="flex items-center justify-between relative">
-                                {/* Progress Line */}
-                                <div className="absolute top-4 left-0 right-0 h-1 bg-gray-200 dark:bg-gray-700 rounded">
-                                    <div
-                                        className="h-full bg-orange-500 rounded transition-all duration-500"
-                                        style={{
-                                            width: overallStatus === 'pending' ? '0%'
-                                                : overallStatus === 'preparing' ? '33%'
-                                                    : overallStatus === 'ready' ? '66%'
-                                                        : overallStatus === 'completed' ? '100%'
-                                                            : '0%'
-                                        }}
-                                    />
-                                </div>
-
-                                {/* Status Steps */}
-                                {(['pending', 'preparing', 'ready', 'completed'] as OrderStatus[]).map((status, index) => {
-                                    const stepConfig = statusConfig[status];
-                                    const StepIcon = stepConfig.icon;
-                                    const isActive = ['pending', 'preparing', 'ready', 'completed'].indexOf(overallStatus) >= index;
-
-                                    return (
-                                        <div key={status} className="relative flex flex-col items-center z-10">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isActive
-                                                ? 'bg-orange-500 text-white'
-                                                : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
-                                                }`}>
-                                                <StepIcon className="w-4 h-4" />
-                                            </div>
-                                            <span className={`mt-2 text-xs font-medium ${isActive
-                                                ? 'text-orange-500'
-                                                : 'text-gray-400'
-                                                }`}>
-                                                {stepConfig.label.split(' ')[0]}
-                                            </span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
                         {/* Vendor-wise Status */}
                         <div className="card p-6">
                             <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
@@ -274,8 +234,50 @@ export default function OrderTrackingPage({ params }: PageProps) {
                                                 </div>
                                             </div>
 
+                                            {/* Vendor Progress Bar */}
+                                            <div className="mb-4">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    {(['pending', 'preparing', 'ready', 'completed'] as const).map((status, idx) => {
+                                                        const stepConfig = statusConfig[status];
+                                                        const StepIcon = stepConfig.icon;
+                                                        const statusOrder = ['pending', 'preparing', 'ready', 'completed'];
+                                                        const currentStatusIndex = statusOrder.indexOf(vendorOrder.status);
+                                                        const isActive = currentStatusIndex >= idx;
+                                                        const isCurrent = currentStatusIndex === idx;
+
+                                                        return (
+                                                            <div key={status} className="flex flex-col items-center flex-1 relative">
+                                                                {/* Connecting Line */}
+                                                                {idx < 3 && (
+                                                                    <div className={`absolute top-2 left-1/2 w-full h-0.5 ${isActive && currentStatusIndex > idx
+                                                                        ? 'bg-orange-500'
+                                                                        : 'bg-gray-300 dark:bg-gray-600'
+                                                                        }`} style={{ zIndex: 0 }} />
+                                                                )}
+
+                                                                {/* Status Icon */}
+                                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center relative z-10 ${isActive
+                                                                    ? isCurrent
+                                                                        ? 'bg-orange-500 text-white ring-4 ring-orange-200 dark:ring-orange-900'
+                                                                        : 'bg-orange-500 text-white'
+                                                                    : 'bg-gray-300 dark:bg-gray-600 text-gray-500'
+                                                                    }`}>
+                                                                    <StepIcon className="w-3 h-3" />
+                                                                </div>
+
+                                                                {/* Status Label */}
+                                                                <span className={`text-[10px] mt-1 font-medium ${isActive ? 'text-orange-500' : 'text-gray-400'
+                                                                    }`}>
+                                                                    {status === 'pending' ? 'Order' : status.charAt(0).toUpperCase() + status.slice(1)}
+                                                                </span>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+
                                             {/* Items */}
-                                            <div className="space-y-2 ml-13">
+                                            <div className="space-y-2">
                                                 {vendorOrder.items?.map((item, itemIndex) => (
                                                     <div key={itemIndex} className="flex justify-between text-sm">
                                                         <span className="text-gray-600 dark:text-gray-400">
@@ -306,6 +308,6 @@ export default function OrderTrackingPage({ params }: PageProps) {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 }

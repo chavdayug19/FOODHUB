@@ -63,7 +63,7 @@ export interface CartState {
 }
 
 // Order types
-export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+export type OrderStatus = 'pending' | 'in-progress' | 'preparing' | 'ready' | 'completed' | 'cancelled';
 
 export interface VendorOrderItem {
     menuItemId: string;

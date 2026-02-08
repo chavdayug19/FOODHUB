@@ -6,6 +6,7 @@ const OrderSchema = new mongoose.Schema({
   // Array of sub-orders per vendor
   vendorOrders: [{
     vendorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Vendor', required: true },
+    vendorName: { type: String }, // Snapshot of vendor name
     items: [{
       menuItemId: { type: mongoose.Schema.Types.ObjectId, ref: 'MenuItem', required: true },
       name: { type: String, required: true }, // Snapshot of name
@@ -17,7 +18,8 @@ const OrderSchema = new mongoose.Schema({
       enum: ['pending', 'preparing', 'ready', 'completed', 'cancelled'],
       default: 'pending'
     },
-    totalAmount: { type: Number, required: true }
+    subtotal: { type: Number }, // Vendor subtotal
+    totalAmount: { type: Number } // Keep for backward compatibility
   }],
 
   totalAmount: { type: Number, required: true },

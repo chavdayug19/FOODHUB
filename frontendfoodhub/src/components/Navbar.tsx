@@ -82,18 +82,10 @@ export default function Navbar() {
                         {/* User Menu */}
                         {isAuthenticated ? (
                             <div className="flex items-center gap-3">
-                                {user?.role === 'admin' && (
+                                {/* Dashboard button - Only for admin, vendor, and staff */}
+                                {(user?.role === 'admin' || user?.role === 'vendor' || user?.role === 'staff') && (
                                     <Link
-                                        href="/dashboard/admin"
-                                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                                    >
-                                        <LayoutDashboard className="w-4 h-4" />
-                                        <span className="text-sm font-medium">Dashboard</span>
-                                    </Link>
-                                )}
-                                {user?.role === 'vendor' && (
-                                    <Link
-                                        href="/dashboard/vendor"
+                                        href={user?.role === 'admin' ? '/dashboard/admin' : '/dashboard/vendor'}
                                         className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                                     >
                                         <LayoutDashboard className="w-4 h-4" />
@@ -177,7 +169,8 @@ export default function Navbar() {
                                     <p className="text-sm text-gray-500 dark:text-gray-400">Signed in as</p>
                                     <p className="font-medium text-gray-900 dark:text-white">{user?.name}</p>
                                 </div>
-                                {(user?.role === 'admin' || user?.role === 'vendor') && (
+                                {/* Dashboard link - Only for admin, vendor, and staff */}
+                                {(user?.role === 'admin' || user?.role === 'vendor' || user?.role === 'staff') && (
                                     <Link
                                         href={user?.role === 'admin' ? '/dashboard/admin' : '/dashboard/vendor'}
                                         onClick={() => setIsMenuOpen(false)}

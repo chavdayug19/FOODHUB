@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const MenuItem = require('../models/MenuItem');
+const Vendor = require('../models/Vendor');
 
 exports.createOrder = async (req, res) => {
   try {
@@ -17,6 +18,10 @@ exports.createOrder = async (req, res) => {
     for (const vo of vendorOrders) {
       let vendorTotal = 0;
       let recalculatedItems = [];
+
+      // Fetch vendor name
+      const vendor = await Vendor.findById(vo.vendorId);
+      const vendorName = vendor ? vendor.name : 'Unknown Vendor';
 
       for (const item of vo.items) {
         const dbItem = await MenuItem.findById(item.menuItemId);
@@ -39,8 +44,9 @@ exports.createOrder = async (req, res) => {
       grandTotal += vendorTotal;
       recalculatedVendorOrders.push({
         vendorId: vo.vendorId,
+        vendorName: vendorName, // Add vendor name
         items: recalculatedItems,
-        totalAmount: vendorTotal,
+        subtotal: vendorTotal, // Changed from totalAmount to subtotal
         status: 'pending'
       });
     }
@@ -84,7 +90,25 @@ exports.getOrders = async (req, res) => {
     }
 
     const orders = await Order.find(filter).sort({ createdAt: -1 });
-    res.json(orders);
+
+    // Convert to plain objects so we can modify them
+    const ordersObj = orders.map(order => order.toObject());
+
+    // Populate vendor names if missing (for backward compatibility)
+    for (let order of ordersObj) {
+      for (let vendorOrder of order.vendorOrders) {
+        if (!vendorOrder.vendorName) {
+          const vendor = await Vendor.findById(vendorOrder.vendorId);
+          vendorOrder.vendorName = vendor ? vendor.name : 'Unknown Vendor';
+        }
+        // Ensure subtotal is set
+        if (!vendorOrder.subtotal && vendorOrder.totalAmount) {
+          vendorOrder.subtotal = vendorOrder.totalAmount;
+        }
+      }
+    }
+
+    res.json(ordersObj);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -129,7 +153,23 @@ exports.getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: 'Order not found' });
-    res.json(order);
+
+    // Convert to plain object so we can modify it
+    const orderObj = order.toObject();
+
+    // Populate vendor names if missing (for backward compatibility with old orders)
+    for (let vendorOrder of orderObj.vendorOrders) {
+      if (!vendorOrder.vendorName) {
+        const vendor = await Vendor.findById(vendorOrder.vendorId);
+        vendorOrder.vendorName = vendor ? vendor.name : 'Unknown Vendor';
+      }
+      // Ensure subtotal is set (for backward compatibility)
+      if (!vendorOrder.subtotal && vendorOrder.totalAmount) {
+        vendorOrder.subtotal = vendorOrder.totalAmount;
+      }
+    }
+
+    res.json(orderObj);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
